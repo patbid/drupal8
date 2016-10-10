@@ -1,0 +1,16 @@
+name: Webform
+description: Enables the creation of forms and questionnaires.
+# core: 8.x
+type: module
+package: Webform
+dependencies:
+  - views
+test_dependencies:
+  - token
+configure: webform.settings
+
+# Information added by Drupal.org packaging script on 2016-02-18
+version: '8.x-4.x-dev'
+core: '8.x'
+project: 'webform'
+datestamp: 1455793488

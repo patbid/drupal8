@@ -1,0 +1,8 @@
+name: Layout Plugin UI
+type: module
+description: Provides a list of all registred layouts.
+core: 8.x
+package: Layout
+dependencies:
+  - layout_plugin
+configure: layout_plugin_ui.admin

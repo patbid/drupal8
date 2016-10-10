@@ -1,0 +1,18 @@
+{{ attach_library('layout_plugin_ui/admin') }}
+{% for layout in layouts %}
+  <details>
+    <summary>{{ layout.label }} ({% trans %} {{ layout.category }} {% endtrans %})</summary>
+    <div class="details-wrapper">
+      <div class="image">
+        <img src="{{ base_path ~ layout.icon }}" alt="{{ region.label }}" />
+      </div>
+      <div class="regions">
+        <ul>
+          {% for region in layout.regions %}
+            <li>{{ region.label }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </details>
+{% endfor %}

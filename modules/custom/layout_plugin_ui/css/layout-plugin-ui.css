@@ -1,0 +1,4 @@
+.details-wrapper .image,
+.details-wrapper .regions {
+  display: inline-block;
+}

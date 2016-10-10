@@ -1,0 +1,14 @@
+name: Configuration Share Test Shared
+type: module
+description: 'Support module for Configuration Share testing. Provides a shared field storage.'
+# core: 8.x
+# package: Testing
+dependencies:
+ - config_share
+ - node
+
+# Information added by Drupal.org packaging script on 2016-09-16
+version: '8.x-1.0-beta3'
+core: '8.x'
+project: 'config_share'
+datestamp: 1473995045

@@ -1,0 +1,28 @@
+<?php
+
+/**
+ * @file
+ * Manage synchronizing configuration from extensions.
+ */
+
+/**
+ * Implements hook_modules_installed().
+ */
+function config_sync_modules_installed($module_names) {
+  config_sync_refresh_snapshot();
+}
+
+/**
+ * Implements hook_themes_installed().
+ */
+function config_sync_themes_installed($theme_names) {
+  config_sync_refresh_snapshot();
+}
+
+/**
+ * Refreshes the configuration snapshot.
+ */
+function config_sync_refresh_snapshot() {
+  \Drupal::service('config_sync.snapshotter')->refreshSnapshot();
+  \Drupal::service('config_sync.merged_storage')->deleteAll();
+}

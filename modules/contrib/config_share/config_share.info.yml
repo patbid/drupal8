@@ -1,0 +1,13 @@
+name: Configuration Share
+type: module
+description: 'Enable sharing of configuration between multiple extensions and distributions.'
+# core: 8.x
+dependencies:
+ - config
+ - config_provider
+
+# Information added by Drupal.org packaging script on 2016-09-16
+version: '8.x-1.0-beta3'
+core: '8.x'
+project: 'config_share'
+datestamp: 1473995045

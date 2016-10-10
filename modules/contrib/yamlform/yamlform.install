@@ -1,0 +1,245 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the YAML form module.
+ */
+
+use Drupal\Component\Serialization\Yaml;
+use Drupal\Core\Render\Element;
+use Drupal\yamlform\Entity\YamlForm;
+
+module_load_include('inc', 'yamlform', 'includes/yamlform.update');
+
+/**
+ * Implements hook_uninstall().
+ */
+function yamlform_uninstall() {
+  // Issue #2793597: uninstall error You have requested a non-existent service
+  // "yamlform.email_provider".
+  // Workaround: Don't use the yamlform.email_provider in hook_uninstall().
+  // @see \Drupal\yamlform\YamlFormEmailProvider::uninstall()
+  $config = \Drupal::configFactory()->getEditable('system.mail');
+  $mail_plugins = $config->get('interface');
+  unset($mail_plugins['yamlform']);
+  $config->set('interface', $mail_plugins)->save();
+}
+
+/**
+ * Implements hook_requirements().
+ */
+function yamlform_requirements($phase) {
+  if ($phase != 'runtime') {
+    return [];
+  }
+
+  $requirements = [];
+
+  // Check HTML email handling.
+  /** @var \Drupal\yamlform\YamlFormEmailProviderInterface $email_provider */
+  $email_provider = \Drupal::service('yamlform.email_provider');
+  $email_provider->check();
+  if ($module = $email_provider->getModuleName()) {
+    $requirements['yamlform_email'] = [
+      'title' => t('YAML Form email: HTML support'),
+      'value' => t('Provided by the @module module', ['@module' => $module]),
+      'severity' => REQUIREMENT_OK,
+    ];
+  }
+  elseif ($mail_plugin_id = $email_provider->getModuleName()) {
+    $requirements['yamlform_email'] = [
+      'title' => t('YAML Form email: HTML support'),
+      'value' => t('Provided by @plugin_id mail plugin', ['@plugin_id' => $mail_plugin_id]),
+      'severity' => REQUIREMENT_OK,
+    ];
+  }
+  else {
+    $requirements['yamlform_email'] = [
+      'title' => t('YAML Form email: HTML support'),
+      'value' => t('Unable to determine email module and/o provider'),
+      'severity' => REQUIREMENT_ERROR,
+    ];
+  }
+
+  // Check third party libraries status.
+  $requirements += _yamlform_libraries_requirements();
+
+  return $requirements;
+}
+
+/******************************************************************************/
+// Helper functions
+/******************************************************************************/
+
+/**
+ * Update YAML form setting to reflect changes in the default settings.
+ *
+ * This function can be used to apply new YAML form settings to all existing
+ * YAML forms.
+ *
+ * @see \Drupal\yamlform\Entity\YamlForm::setSettings
+ */
+function _yamlform_update_settings() {
+  $default_settings = YamlForm::getDefaultSettings();
+  $config_factory = \Drupal::configFactory();
+  // Update 'yamlform.yamlform.*' configuration.
+  foreach ($config_factory->listAll('yamlform.yamlform.') as $yamlform_config_name) {
+    $yamlform_config = $config_factory->getEditable($yamlform_config_name);
+
+    // Get data.
+    $data = $yamlform_config->getRawData();
+
+    // Always apply the default settings.
+    $settings = $default_settings;
+    // Now apply custom settings.
+    foreach ($data['settings'] as $name => $value) {
+      $settings[$name] = $value;
+    }
+
+    // Set settings and save data.
+    $data['settings'] = $settings;
+    \Drupal::configFactory()->getEditable($yamlform_config_name)->setData($data)->save();
+  }
+}
+
+/******************************************************************************/
+// Update hook: YAML Form 8.x-1.0-beta14+ - 8043+
+// All previous update hooks are archived in includes/yamlform.update.inc.
+/******************************************************************************/
+
+/**
+ * Issue #2783785: Add html editor to UI.
+ */
+function yamlform_update_8044(&$sandbox) {
+  $config_factory = \Drupal::configFactory();
+  // Update 'yamlform.yamlform.*' configuration.
+  foreach ($config_factory->listAll('yamlform.yamlform.') as $yamlform_config_name) {
+    $yamlform_config = $config_factory->getEditable($yamlform_config_name);
+    $data = $yamlform_config->getRawData();
+
+    // Decode $elements. Skip any invalid or empty elements.
+    try {
+      $original_elements = Yaml::decode($data['elements']);
+      if (!is_array($original_elements)) {
+        continue;
+      }
+    }
+    catch (\Exception $exception) {
+      continue;
+    }
+
+    $updated_elements = $original_elements;
+    _yamlform_update_8044($updated_elements);
+    if ($updated_elements != $original_elements) {
+      $data['elements'] = Yaml::encode($updated_elements);
+      \Drupal::configFactory()
+        ->getEditable($yamlform_config_name)
+        ->setData($data)
+        ->save();
+    }
+  }
+}
+
+/**
+ * Change #type to autocomplete.
+ */
+function _yamlform_update_8044(array &$elements) {
+  foreach ($elements as $key => &$element) {
+    if (Element::property($key) || !is_array($element)) {
+      continue;
+    }
+
+    if (!empty($element['#autocomplete_existing']) || !empty($element['#autocomplete_options'])) {
+      $element['#type'] = 'autocomplete';
+    }
+
+    _yamlform_update_8044($element);
+  }
+}
+
+/**
+ * Issue #2791823: Improve element attributes class handling.
+ */
+function yamlform_update_8045(&$sandbox) {
+  // Update 'yamlform.settings' configuration.
+  $settings_config = \Drupal::configFactory()->getEditable('yamlform.settings');
+  $settings_config->set('elements.wrapper_classes', "container-inline clearfix
+form--inline clearfix    
+messages messages--error
+messages messages--warning
+messages messages--status");
+  $settings_config->set('elements.classes', "container-inline clearfix
+form--inline clearfix    
+messages messages--error
+messages messages--warning
+messages messages--status");
+  $settings_config->save();
+}
+
+/**
+ * Issue #2792681: Allow a YAML Form's source entity to be (optionally) populated using query string parameters.
+ */
+function yamlform_update_8046() {
+  // Add 'form_prepopulate_source_entity' settings for forms.
+  _yamlform_update_settings();
+}
+
+/**
+ * Issue #2793273 by smaz: Send email to form element: Use 'option value' instead of 'option text'
+ */
+function yamlform_update_8047(&$sandbox) {
+  $ids = [];
+
+  // Update 'yamlform.yamlform.*' configuration.
+  $config_factory = \Drupal::configFactory();
+  foreach ($config_factory->listAll('yamlform.yamlform.') as $yamlform_config_name) {
+    $yamlform_config = $config_factory->getEditable($yamlform_config_name);
+    $handlers = $yamlform_config->get('handlers');
+
+    $has_mail_token = FALSE;
+    foreach ($handlers as $handler_id => $handler) {
+      if ($handler['id'] != 'email') {
+        continue;
+      }
+
+      $base = "handlers.$handler_id";
+
+      $mail_fields = ['to_mail', 'cc_mail', 'bcc_mail', 'from_mail'];
+      foreach ($mail_fields as $mail_field) {
+        $setting_name = $base . '.settings.' . $mail_field;
+        $mail = $yamlform_config->get($setting_name);
+        if (preg_match('/:value\]$/', $mail)) {
+          $mail = preg_replace('/:value\]$/', ':raw]', $mail);
+          $yamlform_config->set($setting_name, $mail);
+          $has_mail_token = TRUE;
+        }
+      }
+    }
+
+    if ($has_mail_token) {
+      $ids[] = $yamlform_config->get('id');
+      $yamlform_config->save(TRUE);
+    }
+  }
+
+  if (!empty($ids)) {
+    $messages[] = t('Updated email handler for YAML forms: @ids', ['@ids' => implode(', ', array_unique($ids))]);
+  }
+
+  return implode("\n", $messages);
+}
+
+/**
+ * Issue #2802637: Add prefix support to CSV export column headers.
+ */
+function yamlform_update_8048() {
+  // Update 'yamlform.settings' configuration.
+  $settings_config = \Drupal::configFactory()->getEditable('yamlform.settings');
+  $settings_config->set('export.header_format', $settings_config->get('export.header_keys'));
+  $settings_config->clear('export.header_keys');
+  $settings_config->clear('export.likert_questions_format');
+  $settings_config->set('export.header_prefix', TRUE);
+  $settings_config->set('export.header_prefix_label_delimiter', ': ');
+  $settings_config->set('export.header_prefix_key_delimiter', '__');
+  $settings_config->save();
+}

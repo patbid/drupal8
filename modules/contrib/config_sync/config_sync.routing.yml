@@ -1,0 +1,31 @@
+config_sync.initialize:
+  path: '/admin/config/development/configuration/sync-extensions'
+  defaults:
+    _form: '\Drupal\config_sync\Form\ConfigSyncInitialize'
+    _title: 'Synchronize from extensions'
+  requirements:
+    _permission: 'synchronize configuration'
+
+config_sync.import:
+  path: '/admin/config/development/configuration/sync-extensions/import'
+  defaults:
+    _form: '\Drupal\config_sync\Form\ConfigSyncImport'
+    _title: 'Synchronize'
+  requirements:
+    _permission: 'synchronize configuration'
+
+config_sync.diff:
+  path: '/admin/config/development/configuration/sync-extensions/diff/{source_name}/{target_name}'
+  defaults:
+    _controller: '\Drupal\config_sync\Controller\ConfigSyncController::diff'
+    target_name: NULL
+  requirements:
+    _permission: 'synchronize configuration'
+
+config_sync.diff_collection:
+  path: '/admin/config/development/configuration/sync-extensions/diff_collection/{collection}/{source_name}/{target_name}'
+  defaults:
+    _controller: '\Drupal\config_sync\Controller\ConfigSyncController::diff'
+    target_name: NULL
+  requirements:
+    _permission: 'synchronize configuration'

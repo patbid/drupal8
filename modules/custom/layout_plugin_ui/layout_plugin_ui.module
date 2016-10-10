@@ -1,0 +1,19 @@
+<?php
+
+/**
+ * Implements hook_theme().
+ */
+function layout_plugin_ui_theme() {
+  return [
+    'layout_plugin_ui' => [
+      'variables' => ['layouts' => NULL],
+    ],
+  ];
+}
+
+/**
+ * Implements hook_preprocess_layout_plugin_ui().
+ */
+function layout_plugin_ui_preprocess_layout_plugin_ui(&$variables) {
+  $variables['base_path'] = base_path();
+}

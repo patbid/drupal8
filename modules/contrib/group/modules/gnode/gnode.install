@@ -1,0 +1,31 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the group node module.
+ */
+
+use Drupal\group\Entity\GroupContent;
+use Drupal\Core\Entity\EntityTypeListenerInterface;
+use Drupal\Core\Entity\Sql\SqlContentEntityStorage;
+
+/**
+ * Update the group nodes view to use the argument provided title.
+ */
+function gnode_update_8001() {
+  $view = \Drupal::configFactory()->getEditable('views.view.group_nodes');
+  $view->set('display.default.display_options.title', 'Nodes');
+  $view->set('display.default.display_options.arguments.gid.title_enable', TRUE);
+  $view->set('display.default.display_options.arguments.gid.title', '{{ arguments.gid|placeholder }} nodes');
+  $view->save(TRUE);
+}
+
+/**
+ * Update the group nodes view to use the access overview permission.
+ */
+function gnode_update_8002() {
+  $view = \Drupal::configFactory()->getEditable('views.view.group_nodes');
+  $view->set('display.default.display_options.access.type', 'group_permission');
+  $view->set('display.default.display_options.access.options.group_permission', 'access group_node overview');
+  $view->save(TRUE);
+}

@@ -1,0 +1,7 @@
+layout_plugin_ui.admin:
+  path: 'admin/config/development/layoutpluginui'
+  defaults:
+    _controller: '\Drupal\layout_plugin_ui\Controller\LayoutPluginUiController::content'
+    _title: 'Layout PLugin UI'
+  requirements:
+    _permission: 'access layouts overview'

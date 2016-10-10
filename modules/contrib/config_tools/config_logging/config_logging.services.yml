@@ -1,0 +1,6 @@
+services:
+  config_logging.config.events:
+    class: Drupal\config_logging\LogConfigChanges
+    arguments: ['@config.manager', '@logger.factory']
+    tags:
+      - {name: event_subscriber}

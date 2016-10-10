@@ -1,0 +1,11 @@
+name: ThemeKey
+description: Map themes to Drupal paths or object properties.
+# core: 8.x
+package: ThemeKey
+type: module
+
+# Information added by Drupal.org packaging script on 2014-12-04
+version: '8.x-1.x-dev'
+core: '8.x'
+project: 'themekey'
+datestamp: 1417693348

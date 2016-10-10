@@ -1,0 +1,14 @@
+uuid: 63addc89-fc0e-44bd-b865-07c5d86b8ee9
+langcode: fr
+status: true
+dependencies: {  }
+name: reerrrre
+label: reerrrre
+effects:
+  1d47343e-6a00-49db-be5c-57a590224438:
+    uuid: 1d47343e-6a00-49db-be5c-57a590224438
+    id: image_resize
+    weight: 1
+    data:
+      width: 20
+      height: 20

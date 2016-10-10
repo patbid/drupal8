@@ -1,0 +1,14 @@
+config_sync.sync:
+  route_name: config_sync.initialize
+  title: 'Syncronize from extensions'
+  base_route: config.sync
+
+config_sync.sync_initialize:
+  route_name: config_sync.initialize
+  title: Initialize
+  parent_id: config_sync.sync
+
+config_sync.sync_import:
+  route_name: config_sync.import
+  title: Import
+  parent_id: config_sync.sync

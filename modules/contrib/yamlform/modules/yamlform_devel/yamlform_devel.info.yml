@@ -1,0 +1,14 @@
+name: 'YAML Form Devel'
+type: module
+description: 'Provides development tools YAML Form module.'
+package: 'YAML Form'
+# core: 8.x
+dependencies:
+  - devel
+  - yamlform
+
+# Information added by Drupal.org packaging script on 2016-09-19
+version: '8.x-1.0-beta16'
+core: '8.x'
+project: 'yamlform'
+datestamp: 1474329541
