@@ -1,0 +1,72 @@
+hello.hello:
+  path: '/hello/{param}/{autre}'
+  defaults:
+    _controller: '\Drupal\hello\Controller\HelloController::content'
+    _title: 'Hello page'
+    param: ''
+    autre: 'autre'
+  requirements:
+    _access: 'TRUE'
+
+hello.hellorss:
+  path: '/hello-rss'
+  defaults:
+    _controller: '\Drupal\hello\Controller\HelloRssController::content'
+    _title: 'Hello RSS'
+  requirements:
+    _access: 'TRUE'
+
+hello.listenoeuds:
+  path: '/liste-noeuds/{noeud}'
+  defaults:
+    _controller: '\Drupal\hello\Controller\listeNoeudsController::content'
+    _title: 'Nos noeuds'
+    noeud: 'page'
+  requirements:
+    _access: 'TRUE'
+
+hello.majnode:
+  path: '/node/{node}/majnode'
+  defaults:
+    _controller: '\Drupal\hello\Controller\majNodeController::content'
+    _title: 'History'
+  requirements:
+    _access: 'TRUE'
+
+hello.calcul:
+  path: '/calcul'
+  defaults:
+    _form: '\Drupal\hello\Form\helloForm'
+    _title: 'Calculatrice'
+  requirements:
+    _access: 'TRUE'
+    _permission: 'access hello'
+
+hello.resultat:
+  path: '/resultat/{value1}/{value2}/{op}/{result}'
+  defaults:
+    _controller: '\Drupal\hello\Controller\resultatController::content'
+    _title: 'Résultat Calcul'
+    value1: 0
+    value2: 0
+    op: +
+    result: 0
+  requirements:
+    _access: 'TRUE'
+
+hello.adminform:
+  path: '/adminform'
+  defaults:
+    _form: '\Drupal\hello\Form\helloAdminForm'
+    _title: 'Admin form'
+  requirements:
+    _access: 'TRUE'
+    _permission: 'administrator hello'
+
+hello.access:
+    path: '/hello-access'
+    defaults:
+      _controller: '\Drupal\hello\Controller\HelloAccessController::content'
+      _title: 'Hello Access'
+    requirements:
+      _access_hello: '18000'

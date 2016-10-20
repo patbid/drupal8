@@ -1,0 +1,49 @@
+<?php
+
+/**
+ * @file
+ *   Webform module install/schema hooks.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+use Drupal\Core\Database\Database;
+
+function annonce_schema()
+{
+    $schema = array();
+    $schema['annonce_history'] = array(
+        'description' => 'annonce views',
+        'fields' => array(
+            'vid' => array(
+                'description' => 'Primary Key: Unique view ID.',
+                'type' => 'serial',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+            ),
+            'aid' => array(
+                'description' => 'annonce ID.',
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+            ),
+            'uid' => array(
+                'description' => 'User ID.',
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+            ),
+            'update_time' => array(
+                'description' => 'Timestamp of view.',
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+            ),
+        ),
+        'primary key' => array('vid'),
+        'indexes' => array('aid' => array('aid')),
+    );
+
+    return $schema;
+}

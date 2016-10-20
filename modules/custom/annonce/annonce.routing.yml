@@ -1,0 +1,48 @@
+entity.annonce.canonical:
+  path: '/annonce/{annonce}'
+  defaults:
+    _entity_view: 'annonce'
+    _title: 'Annonce Content'
+  requirements:
+    _entity_access: 'annonce.view'
+
+entity.annonce.collection:
+  path: '/annonce'
+  defaults:
+    _entity_list: 'annonce'
+    _title: 'Annonce List'
+  requirements:
+    _permission: 'annonce.collection.view'
+
+entity.annonce.add_form:
+  path: '/annonce/add'
+  defaults:
+    _entity_form: annonce.add
+    _title: 'Add Annonce'
+  requirements:
+    _entity_create_access: 'annonce'
+
+entity.annonce.edit_form:
+  path: '/annonce/{annonce}/edit'
+  defaults:
+    _entity_form: annonce.edit
+    _title: 'Edit Annonce'
+  requirements:
+    _entity_access: 'annonce.edit'
+
+entity.annonce.delete_form:
+  path: '/annonce/{annonce}/delete'
+  defaults:
+    _entity_form: annonce.delete
+    _title: 'Delete Annonce'
+  requirements:
+    _entity_access: 'annonce.delete'
+
+annonce.settings:
+  path: '/admin/structure/annonce'
+  defaults:
+   _form: '\Drupal\annonce\Entity\Form\AnnonceSettingsForm'
+   _title: 'Annonce Settings'
+  requirements:
+    _permission: 'annonce.settings'
+

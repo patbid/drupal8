@@ -1,0 +1,6 @@
+annonce.admin.structure.settings:
+  title: Annonce Settings
+  description: 'Configure Annonce entity'
+  route_name:  annonce.settings
+  parent: system.admin_structure
+

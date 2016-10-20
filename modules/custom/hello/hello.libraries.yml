@@ -1,0 +1,4 @@
+bloc:
+  css:
+    theme:
+      css/hello.css: {}

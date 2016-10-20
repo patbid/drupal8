@@ -1,0 +1,5 @@
+name: Annonce
+description: "Gestion d'un annuaire d'annonce."
+type: module
+core: 8.x
+version: 8.x-1.0

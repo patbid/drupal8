@@ -1,0 +1,5 @@
+services:
+  access_check.hello:
+    class: Drupal\hello\Access\HelloAccess
+    tags:
+      - { name: access_check, applies_to: _access_hello }

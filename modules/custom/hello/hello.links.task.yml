@@ -1,0 +1,29 @@
+hello.hello:
+  route_name: hello.hello
+  base_route: hello.hello
+  title: 'Bonjour!'
+
+hello.rss:
+  route_name: hello.hellorss
+  base_route: hello.hello
+  title: 'Notre RSS'
+
+hello.noeuds:
+  route_name: hello.listenoeuds
+  base_route: hello.hello
+  title: 'Nos noeuds'
+
+hello.calcul:
+  route_name: hello.calcul
+  base_route: hello.hello
+  title: 'Calculatrice'
+
+hello.maj:
+  route_name: hello.majnode
+  base_route: entity.node.canonical
+  title: 'History'
+
+hello.adminform:
+  route_name: hello.adminform
+  base_route: system.themes_page
+  title: 'Couleur des blocs'

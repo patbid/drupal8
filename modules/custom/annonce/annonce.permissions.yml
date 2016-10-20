@@ -1,0 +1,9 @@
+annonce.collection.view :
+  title : 'view Annonce entity'
+  description : 'view Annonce entity'
+  restrict access : 'true'
+
+annonce.settings :
+  title : 'administer Annonce entity'
+  description : 'administer Annonce entity'
+  restrict access : 'true'

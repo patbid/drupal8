@@ -1,0 +1,9 @@
+access hello:
+  title: 'Access hello'
+  description: 'Access to registers only'
+  restrict access: 'true'
+
+administrator hello:
+  title: 'Administrator hello'
+  description: 'Access to Administrator only'
+  restrict access: 'true'

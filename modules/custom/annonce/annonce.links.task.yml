@@ -1,0 +1,26 @@
+annonce.settings_tab:
+  route_name: annonce.settings
+  base_route: annonce.settings
+  title: 'Settings'
+
+entity.annonce.canonical:
+  route_name: entity.annonce.canonical
+  base_route: entity.annonce.canonical
+  title: 'View'
+
+entity.annonce.edit_form:
+  route_name: entity.annonce.edit_form
+  base_route: entity.annonce.canonical
+  title: 'Edit'
+
+entity.annonce.delete_form:
+  route_name:  entity.annonce.delete_form
+  base_route:  entity.annonce.canonical
+  title: 'Delete'
+
+entity.annonce.collection:
+  title: 'Annonces'
+  route_name: entity.annonce.collection
+  base_route:  system.admin_content
+  description: 'List Annonce'
+

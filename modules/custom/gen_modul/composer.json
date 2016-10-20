@@ -1,0 +1,14 @@
+{
+  "name": "drupal/gen_modul",
+  "type": "drupal-module",
+  "description": "My Awesome Module",
+  "keywords": ["Drupal"],
+  "license": "GPL-2.0+",
+  "homepage": "https://www.drupal.org/project/gen_modul",
+  "minimum-stability": "dev",
+  "support": {
+    "issues": "http://drupal.org/project/issues/gen_modul",
+    "source": "http://cgit.drupalcode.org/gen_modul"
+  },
+  "require": { }
+}

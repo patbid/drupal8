@@ -1,0 +1,6 @@
+name: Hello
+type: module
+description: "test hello"
+core: 8.x
+version: 8.x-1.11
+dependencies:
