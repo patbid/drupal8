@@ -61,13 +61,13 @@ class AnnonceViewsData extends EntityViewsData implements EntityViewsDataInterfa
       // Within 'table', the value of 'group' (translated string) is used as a
       // prefix in Views UI for this table's fields, filters, etc. When adding
       // a field, filter, etc. you can also filter by the group.
-      $data['annonce_history']['table']['group'] = t('annonce_history');
+      $data['annonce_history']['table']['group'] = t('annonce groupe');
 
       // Within 'table', the value of 'provider' is the module that provides schema
       // or the entity type that causes the table to exist. Setting this ensures
       // that views have the correct dependencies. This is automatically set to the
       // module that implements hook_views_data().
-      $data['annonce_history']['table']['provider'] = 'annonce';
+//      $data['annonce_history']['table']['provider'] = 'annonce';
 
       // Some tables are "base" tables, meaning that they can be the base tables
       // for views. Non-base tables can only be brought in via relationships in
@@ -77,9 +77,9 @@ class AnnonceViewsData extends EntityViewsData implements EntityViewsDataInterfa
           // Identifier (primary) field in this table for Views.
           'field' => 'vid',
           // Label in the UI.
-          'title' => t('annonce_history'),
+          'title' => t('annonce history'),
           // Longer description in the UI. Required.
-          'help' => t('See annonces viewed by users'),
+          'help' => t('Show annonces viewed by users'),
           'weight' => -10,
       );
       $data['annonce_history']['table']['join']['annonce'] = array(
@@ -111,7 +111,7 @@ class AnnonceViewsData extends EntityViewsData implements EntityViewsDataInterfa
           'help' => t('annonce id'),
           'field' => array(
               // ID of field handler plugin to use.
-              'id' => 'standard',
+              'id' => 'numeric',
           ),
           // Define a relationship to the node_field_data table, so views whose
           // base table is example_table can add a relationship to nodes. To make a
@@ -125,33 +125,37 @@ class AnnonceViewsData extends EntityViewsData implements EntityViewsDataInterfa
               // Database field name in the other table to join on.
               'base field' => 'id',
               // ID of relationship handler plugin to use.
-              'aid' => 'standard',
+              'id' => 'standard',
               // Default label for relationship in the UI.
               'label' => t('Annonce vue'),
           ),
        );
 
       $data['annonce_history']['uid'] = array(
-          'title' => t('user'),
+          'title' => t('User'),
           'help' => t('user id'),
           'field' => array(
               // ID of field handler plugin to use.
-              'id' => 'standard',
+              'id' => 'numeric',
           ),
+          // Define a relationship to the node_field_data table, so views whose
+          // base table is example_table can add a relationship to nodes. To make a
+          // relationship in the other direction, you can:
+          // - Use hook_views_data_alter() -- see the function body example on that
+          //   hook for details.
+          // - Use the implicit join method described above.
           'relationship' => array(
               // Views name of the table to join to for the relationship.
               'base' => 'users_field_data',
               // Database field name in the other table to join on.
               'base field' => 'uid',
               // ID of relationship handler plugin to use.
-              'uid' => 'standard',
+              'id' => 'standard',
               // Default label for relationship in the UI.
               'label' => t('user vue'),
           ),
-
-
-
       );
+
 
       $data['annonce_history']['update_time'] = array(
           'title' => t('date de visualisation'),
@@ -160,7 +164,7 @@ class AnnonceViewsData extends EntityViewsData implements EntityViewsDataInterfa
               // ID of field handler plugin to use.
               'id' => 'date',
           ),
-          );
+      );
 
       return $data;
   }
