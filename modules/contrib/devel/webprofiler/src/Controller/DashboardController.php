@@ -93,9 +93,7 @@ class DashboardController extends ControllerBase {
     $drupalSettings = [
       'webprofiler' => [
         'token' => $profile->getToken(),
-        'ide_link' => $this->config('webprofiler.config')->get('ide_link'),
-        'ide_link_remote' => $this->config('webprofiler.config')->get('ide_link_remote'),
-        'ide_link_local' => $this->config('webprofiler.config')->get('ide_link_local'),
+        'idelink' => $this->config('webprofiler.config')->get('ide_link'),
         'collectors' => [],
       ],
     ];

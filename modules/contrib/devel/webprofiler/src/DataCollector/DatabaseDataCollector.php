@@ -41,44 +41,30 @@ class DatabaseDataCollector extends DataCollector implements DrupalDataCollector
    * {@inheritdoc}
    */
   public function collect(Request $request, Response $response, \Exception $exception = NULL) {
-    $connections = [];
-    foreach (Database::getAllConnectionInfo() as $key => $info) {
-      $database = Database::getConnection('default', $key);
-      $connections[$key] = $database->getLogger()->get('webprofiler');
-    }
+    $queries = $this->database->getLogger()->get('webprofiler');
 
-    $this->data['connections'] = array_keys($connections);
+    foreach ($queries as &$query) {
+      // Remove caller args.
+      unset($query['caller']['args']);
 
-    $data = [];
-    foreach ($connections as $key => $queries) {
-      foreach ($queries as $query) {
-        // Remove caller args.
-        unset($query['caller']['args']);
-
-        // Remove query args element if empty.
-        if (empty($query['args'])) {
-          unset($query['args']);
-        }
-
-        // Save time in milliseconds.
-        $query['time'] = $query['time'] * 1000;
-        $query['database'] = $key;
-        $data[] = $query;
+      // Remove query args element if empty.
+      if(empty($query['args'])) {
+        unset($query['args']);
       }
+
+      // Save time in milliseconds.
+      $query['time'] = $query['time'] * 1000;
     }
 
-    $querySort = $this->configFactory->get('webprofiler.config')
-      ->get('query_sort');
-    if ('duration' === $querySort) {
-      usort(
-        $data, [
-          "Drupal\\webprofiler\\DataCollector\\DatabaseDataCollector",
-          "orderQueryByTime",
-        ]
-      );
+    $querySort = $this->configFactory->get('webprofiler.config')->get('query_sort');
+    if('duration' === $querySort) {
+      usort($queries, [
+        "Drupal\\webprofiler\\DataCollector\\DatabaseDataCollector",
+        "orderQueryByTime",
+      ]);
     }
 
-    $this->data['queries'] = $data;
+    $this->data['queries'] = $queries;
 
     $options = $this->database->getConnectionOptions();
 

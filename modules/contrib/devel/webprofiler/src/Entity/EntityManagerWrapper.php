@@ -8,21 +8,20 @@
 namespace Drupal\webprofiler\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityStorageInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityManagerInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\EntityViewBuilderInterface;
+use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
-use Drupal\webprofiler\Entity\Decorators\Config\ConfigEntityStorageDecorator;
-use Drupal\webprofiler\Entity\Decorators\Config\RoleStorageDecorator;
-use Drupal\webprofiler\Entity\Decorators\Config\ShortcutSetStorageDecorator;
-use Drupal\webprofiler\Entity\Decorators\Config\VocabularyStorageDecorator;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Class EntityManagerWrapper
  */
-class EntityManagerWrapper extends DefaultPluginManager implements EntityTypeManagerInterface, ContainerAwareInterface {
+class EntityManagerWrapper extends DefaultPluginManager implements EntityManagerInterface, ContainerAwareInterface {
 
   /**
    * @var array
@@ -40,9 +39,9 @@ class EntityManagerWrapper extends DefaultPluginManager implements EntityTypeMan
   private $entityManager;
 
   /**
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityManager
+   * @param \Drupal\Core\Entity\EntityManagerInterface $entityManager
    */
-  public function __construct(EntityTypeManagerInterface $entityManager) {
+  public function __construct(EntityManagerInterface $entityManager) {
     $this->entityManager = $entityManager;
   }
 
@@ -52,14 +51,26 @@ class EntityManagerWrapper extends DefaultPluginManager implements EntityTypeMan
   public function getStorage($entity_type) {
     /** @var ConfigEntityStorageInterface $handler */
     $handler = $this->getHandler($entity_type, 'storage');
-    $type = ($handler instanceof ConfigEntityStorageInterface) ? 'config' : 'content';
 
-    if (!isset($this->loaded[$type][$entity_type])) {
-      $handler = $this->getStorageDecorator($entity_type, $handler);
-      $this->loaded[$type][$entity_type] = $handler;
-    }
-    else {
-      $handler = $this->loaded[$type][$entity_type];
+    switch ($entity_type) {
+      case 'block':
+        if (!isset($this->loaded['block'])) {
+          $handler = new EntityStorageDecorator($handler);
+          $this->loaded['block'] = $handler;
+        }
+        else {
+          $handler = $this->loaded['block'];
+        }
+        break;
+      case 'view':
+        if (!isset($this->loaded['view'])) {
+          $handler = new EntityStorageDecorator($handler);
+          $this->loaded['view'] = $handler;
+        }
+        else {
+          $handler = $this->loaded['view'];
+        }
+        break;
     }
 
     return $handler;
@@ -72,62 +83,37 @@ class EntityManagerWrapper extends DefaultPluginManager implements EntityTypeMan
     /** @var EntityViewBuilderInterface $handler */
     $handler = $this->getHandler($entity_type, 'view_builder');
 
-    if ($handler instanceof EntityViewBuilderInterface) {
-      if (!isset($this->rendered[$entity_type])) {
-        $handler = new EntityViewBuilderDecorator($handler);
-        $this->rendered[$entity_type] = $handler;
-      }
-      else {
-        $handler = $this->rendered[$entity_type];
-      }
+    switch ($entity_type) {
+      case 'block':
+        if (!isset($this->rendered['block'])) {
+          $handler = new EntityViewBuilderDecorator($handler);
+          $this->rendered['block'] = $handler;
+        }
+        else {
+          $handler = $this->rendered['block'];
+        }
+        break;
     }
 
-    return $handler;
-  }
-
-  /**
-   * @param $entity_type
-   * @param $handler
-   *
-   * @return \Drupal\webprofiler\Entity\EntityDecorator
-   */
-  private function getStorageDecorator($entity_type, $handler) {
-    if ($handler instanceof ConfigEntityStorageInterface) {
-      switch ($entity_type) {
-        case 'taxonomy_vocabulary':
-          return new VocabularyStorageDecorator($handler);
-          break;
-        case 'user_role':
-          return new RoleStorageDecorator($handler);
-          break;
-        case 'shortcut_set':
-          return new ShortcutSetStorageDecorator($handler);
-          break;
-        default:
-          return new ConfigEntityStorageDecorator($handler);
-          break;
-      }
-    }
     return $handler;
   }
 
   /**
    * @param $type
-   * @param $entity_type
    *
    * @return array
    */
-  public function getLoaded($type, $entity_type) {
-    return isset($this->loaded[$type][$entity_type]) ? $this->loaded[$type][$entity_type] : NULL;
+  public function getLoaded($type) {
+    return isset($this->loaded[$type]) ? $this->loaded[$type] : NULL;
   }
 
   /**
-   * @param $entity_type
+   * @param $type
    *
    * @return array
    */
-  public function getRendered( $entity_type) {
-    return isset($this->rendered[$entity_type]) ? $this->rendered[$entity_type] : NULL;
+  public function getRendered($type) {
+    return isset($this->rendered[$type]) ? $this->rendered[$type]: NULL;
   }
 
   /**
@@ -147,6 +133,69 @@ class EntityManagerWrapper extends DefaultPluginManager implements EntityTypeMan
   /**
    * {@inheritdoc}
    */
+  public function onBundleCreate($bundle, $entity_type_id) {
+    $this->entityManager->onBundleCreate($bundle, $entity_type_id);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function onBundleDelete($bundle, $entity_type_id) {
+    $this->entityManager->onBundleDelete($bundle, $entity_type_id);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getEntityTypeLabels($group = FALSE) {
+    return $this->entityManager->getEntityTypeLabels($group = FALSE);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getBaseFieldDefinitions($entity_type_id) {
+    return $this->entityManager->getBaseFieldDefinitions($entity_type_id);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFieldDefinitions($entity_type_id, $bundle) {
+    return $this->entityManager->getFieldDefinitions($entity_type_id, $bundle);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFieldStorageDefinitions($entity_type_id) {
+    return $this->entityManager->getFieldStorageDefinitions($entity_type_id);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getLastInstalledFieldStorageDefinitions($entity_type_id) {
+    return $this->entityManager->getLastInstalledFieldStorageDefinitions($entity_type_id);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFieldMap() {
+    return $this->entityManager->getFieldMap();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFieldMapByFieldType($field_type) {
+    return $this->entityManager->getFieldMapByFieldType($field_type);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getAccessControlHandler($entity_type) {
     return $this->entityManager->getAccessControlHandler($entity_type);
   }
@@ -154,8 +203,29 @@ class EntityManagerWrapper extends DefaultPluginManager implements EntityTypeMan
   /**
    * {@inheritdoc}
    */
+  public function getAllBundleInfo() {
+    return $this->entityManager->getAllBundleInfo();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function clearCachedDefinitions() {
     $this->entityManager->clearCachedDefinitions();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function clearCachedFieldDefinitions() {
+    $this->entityManager->clearCachedFieldDefinitions();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function clearCachedBundles() {
+    $this->entityManager->clearCachedBundles();
   }
 
   /**
@@ -196,21 +266,43 @@ class EntityManagerWrapper extends DefaultPluginManager implements EntityTypeMan
   /**
    * {@inheritdoc}
    */
-  public function createHandlerInstance(
-    $class,
-    EntityTypeInterface $definition = NULL
-  ) {
+  public function createHandlerInstance($class, EntityTypeInterface $definition = NULL) {
     return $this->entityManager->createHandlerInstance($class, $definition);
   }
 
   /**
    * {@inheritdoc}
    */
+  public function getBundleInfo($entity_type) {
+    return $this->entityManager->getBundleInfo($entity_type);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getExtraFields($entity_type_id, $bundle) {
+    return $this->entityManager->getExtraFields($entity_type_id, $bundle);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getTranslationFromContext(EntityInterface $entity, $langcode = NULL, $context = []) {
+    return $this->entityManager->getTranslationFromContext($entity, $langcode, $context);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getDefinition($entity_type_id, $exception_on_invalid = TRUE) {
-    return $this->entityManager->getDefinition(
-      $entity_type_id,
-      $exception_on_invalid
-    );
+    return $this->entityManager->getDefinition($entity_type_id, $exception_on_invalid);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getLastInstalledDefinition($entity_type_id) {
+    return $this->entityManager->getLastInstalledDefinition($entity_type_id);
   }
 
   /**
@@ -223,8 +315,148 @@ class EntityManagerWrapper extends DefaultPluginManager implements EntityTypeMan
   /**
    * {@inheritdoc}
    */
+  public function getAllViewModes() {
+    return $this->entityManager->getAllViewModes();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getViewModes($entity_type_id) {
+    return $this->entityManager->getViewModes($entity_type_id);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getAllFormModes() {
+    return $this->entityManager->getAllFormModes();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFormModes($entity_type_id) {
+    return $this->entityManager->getFormModes($entity_type_id);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getViewModeOptions($entity_type_id, $include_disabled = FALSE) {
+    return $this->entityManager->getViewModeOptions($entity_type_id, $include_disabled);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFormModeOptions($entity_type_id) {
+    return $this->entityManager->getFormModeOptions($entity_type_id);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getViewModeOptionsByBundle($entity_type_id, $bundle) {
+    return $this->entityManager->getViewModeOptionsByBundle($entity_type_id, $bundle);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFormModeOptionsByBundle($entity_type_id, $bundle) {
+    return $this->entityManager->getFormModeOptionsByBundle($entity_type_id, $bundle);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function loadEntityByUuid($entity_type_id, $uuid) {
+    return $this->entityManager->loadEntityByUuid($entity_type_id, $uuid);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function loadEntityByConfigTarget($entity_type_id, $target) {
+    return $this->entityManager->loadEntityByConfigTarget($entity_type_id, $target);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getEntityTypeFromClass($class_name) {
+    return $this->entityManager->getEntityTypeFromClass($class_name);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function onEntityTypeCreate(EntityTypeInterface $entity_type) {
+    $this->entityManager->onEntityTypeCreate($entity_type);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function onEntityTypeUpdate(EntityTypeInterface $entity_type, EntityTypeInterface $original) {
+    $this->entityManager->onEntityTypeUpdate($entity_type, $original);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function onEntityTypeDelete(EntityTypeInterface $entity_type) {
+    $this->entityManager->onEntityTypeDelete($entity_type);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function createInstance($plugin_id, array $configuration = []) {
     return $this->entityManager->createInstance($plugin_id, $configuration);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function onFieldDefinitionCreate(FieldDefinitionInterface $field_definition) {
+    $this->entityManager->onFieldDefinitionCreate($field_definition);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function onFieldDefinitionUpdate(FieldDefinitionInterface $field_definition, FieldDefinitionInterface $original) {
+    $this->entityManager->onFieldDefinitionUpdate($field_definition, $original);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function onFieldDefinitionDelete(FieldDefinitionInterface $field_definition) {
+    $this->entityManager->onFieldDefinitionDelete($field_definition);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function onFieldStorageDefinitionCreate(FieldStorageDefinitionInterface $storage_definition) {
+    $this->entityManager->onFieldStorageDefinitionCreate($storage_definition);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function onFieldStorageDefinitionUpdate(FieldStorageDefinitionInterface $storage_definition, FieldStorageDefinitionInterface $original) {
+    $this->entityManager->onFieldStorageDefinitionUpdate($storage_definition, $original);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function onFieldStorageDefinitionDelete(FieldStorageDefinitionInterface $storage_definition) {
+    $this->entityManager->onFieldStorageDefinitionDelete($storage_definition);
   }
 
   /**
@@ -239,6 +471,20 @@ class EntityManagerWrapper extends DefaultPluginManager implements EntityTypeMan
    */
   public function setContainer(ContainerInterface $container = NULL) {
     $this->entityManager->setContainer($container = NULL);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function clearDisplayModeInfo() {
+    return $this->entityManager->clearDisplayModeInfo();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setFieldMap(array $field_map) {
+    return $this->entityManager->setFieldMap($field_map);
   }
 
 }

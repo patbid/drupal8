@@ -1,0 +1,24 @@
+<?php
+
+/**
+ * @file
+ * Contains email_form.module..
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function email_form_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the email_form module.
+    case 'help.page.email_form':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('email form') . '</p>';
+      return $output;
+
+    default:
+  }
+}

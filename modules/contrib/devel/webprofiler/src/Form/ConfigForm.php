@@ -48,7 +48,7 @@ class ConfigForm extends ConfigFormBase {
 
   /**
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
-   * @param Profiler $profiler
+   * @param \Symfony\Component\HttpKernel\Profiler\Profiler $profiler
    * @param \Drupal\webprofiler\Profiler\ProfilerStorageManager $storageManager
    * @param array $templates
    */
@@ -71,6 +71,7 @@ class ConfigForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    $this->profiler->disable();
     $config = $this->config('webprofiler.config');
 
     $form['purge_on_cache_clear'] = [
@@ -105,31 +106,11 @@ class ConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('active_toolbar_items'),
     ];
 
-    $form['ide_settings'] = [
-      '#type' => 'details',
-      '#title' => $this->t('IDE settings'),
-      '#open' => FALSE,
-    ];
-
-    $form['ide_settings']['ide_link'] = [
+    $form['ide_link'] = [
       '#type' => 'textfield',
       '#title' => $this->t('IDE link'),
       '#description' => $this->t('IDE link for open files.'),
       '#default_value' => $config->get('ide_link'),
-    ];
-
-    $form['ide_settings']['ide_link_remote'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('IDE link remote path'),
-      '#description' => $this->t('The path of the remote docroot. Leave blank if the docroot is on the same machine of the IDE. No trailing slash.'),
-      '#default_value' => $config->get('ide_link_remote'),
-    ];
-
-    $form['ide_settings']['ide_link_local'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('IDE link local path'),
-      '#description' => $this->t('The path of the local docroot. Leave blank if the docroot is on the same machine of IDE. No trailing slash.'),
-      '#default_value' => $config->get('ide_link_local'),
     ];
 
     $form['database'] = [
@@ -161,29 +142,6 @@ class ConfigForm extends ConfigFormBase {
       '#min' => 0,
     ];
 
-    $storageId = $this->config('webprofiler.config')->get('storage');
-    $storage = $this->storageManager->getStorage($storageId);
-
-    $form['purge'] = [
-      '#type' => 'details',
-      '#title' => $this->t('Purge profiles'),
-      '#open' => FALSE,
-    ];
-
-    $form['purge']['purge'] = [
-      '#type' => 'submit',
-      '#value' => $this->t('Purge'),
-      '#submit' => [[$this, 'purge']],
-    ];
-
-    $form['purge']['purge-help'] = [
-      '#type' => 'inline_template',
-      '#template' => '<div class="form-item">{{ message }}</div>',
-      '#context' => [
-        'message' => $this->t('Purge %storage profiles.', ['%storage' => $storage['title']]),
-      ],
-    ];
-
     return parent::buildForm($form, $form_state);
   }
 
@@ -197,21 +155,11 @@ class ConfigForm extends ConfigFormBase {
       ->set('exclude', $form_state->getValue('exclude'))
       ->set('active_toolbar_items', $form_state->getValue('active_toolbar_items'))
       ->set('ide_link', $form_state->getValue('ide_link'))
-      ->set('ide_link_remote', $form_state->getValue('ide_link_remote'))
-      ->set('ide_link_local', $form_state->getValue('ide_link_local'))
       ->set('query_sort', $form_state->getValue('query_sort'))
       ->set('query_highlight', $form_state->getValue('query_highlight'))
       ->save();
 
     parent::submitForm($form, $form_state);
-  }
-
-  /**
-   * Purges profiles.
-   */
-  public function purge(array &$form, FormStateInterface $form_state) {
-    $this->profiler->purge();
-    drupal_set_message($this->t('Profiles purged'));
   }
 
   /**

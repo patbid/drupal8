@@ -1,0 +1,27 @@
+services:
+  commerce_order.chain_order_type_resolver:
+    class: Drupal\commerce_order\Resolver\ChainOrderTypeResolver
+    tags:
+      - { name: service_collector, call: addResolver, tag: commerce_order.order_type_resolver }
+
+  commerce_order.default_order_type_resolver:
+    class: Drupal\commerce_order\Resolver\DefaultOrderTypeResolver
+    arguments: ['@entity_type.manager']
+    tags:
+      - { name: commerce_order.order_type_resolver, priority: -100 }
+
+  commerce_order.order_assignment:
+    class: Drupal\commerce_order\OrderAssignment
+    arguments: ['@entity_type.manager', '@event_dispatcher']
+
+  commerce_order.order_refresh:
+    class: Drupal\commerce_order\OrderRefresh
+    arguments: ['@entity_type.manager', '@commerce_price.chain_price_resolver', '@current_user']
+    tags:
+      - { name: service_collector, call: addProcessor, tag: commerce_order.order_refresh_processor }
+
+  commerce_order.availabitity_order_refresh_processor:
+    class: Drupal\commerce_order\AvailabilityOrderProcessor
+    arguments: ['@commerce.availability_manager']
+    tags:
+      - { name: commerce_order.order_refresh_processor, priority: 100 }

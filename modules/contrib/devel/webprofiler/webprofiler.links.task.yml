@@ -1,8 +1,13 @@
-webprofiler.settings:
-  title: 'Webprofiler'
-  route_name: webprofiler.settings
-  base_route: devel.admin_settings
+webprofiler.admin_configure:
+  title: 'Configure'
+  route_name: webprofiler.admin_configure
+  base_route: webprofiler.admin_configure
   weight: 10
+webprofiler.admin_manage:
+  title: 'Manage'
+  route_name: webprofiler.admin_manage
+  base_route: webprofiler.admin_configure
+  weight: 20
 webprofiler.dashboard:
   title: 'dashboard'
   route_name: webprofiler.dashboard

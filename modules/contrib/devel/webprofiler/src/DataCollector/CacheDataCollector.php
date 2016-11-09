@@ -131,7 +131,7 @@ class CacheDataCollector extends DataCollector implements DrupalDataCollectorInt
    *
    * @return array
    */
-  public function getCacheHits() {
+  public function cacheHits() {
     return $this->cacheCids(CacheDataCollector::WEBPROFILER_CACHE_HIT);
   }
 
@@ -140,7 +140,7 @@ class CacheDataCollector extends DataCollector implements DrupalDataCollectorInt
    *
    * @return array
    */
-  public function getCacheMisses() {
+  public function cacheMisses() {
     return $this->cacheCids(CacheDataCollector::WEBPROFILER_CACHE_MISS);
   }
 

@@ -7,6 +7,7 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Entity\EntityManagerInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Component\Utility\SafeMarkup;
 use Drupal\webprofiler\DrupalDataCollectorInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -56,7 +57,7 @@ class UserDataCollector extends DataCollector implements DrupalDataCollectorInte
    * {@inheritdoc}
    */
   public function collect(Request $request, Response $response, \Exception $exception = NULL) {
-    $this->data['name'] = $this->currentUser->getDisplayName();
+    $this->data['name'] = $this->currentUser->getUsername();
     $this->data['authenticated'] = $this->currentUser->isAuthenticated();
 
     $this->data['roles'] = [];

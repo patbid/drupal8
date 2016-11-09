@@ -1,0 +1,51 @@
+<?php
+
+/**
+ * @file
+ * Allows users to rename admin paths
+ */
+
+
+/**
+ * Implements hook_help().
+ */
+function rename_admin_paths_help($path, $arg) {
+
+  switch ($path) {
+    case 'admin/help#rename_admin_paths':
+      $output = '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Rename admin paths module allows users to rename admin paths (/admin/..) to /something/... and (/user/..) to /something_else/...') . '</p>';
+      $output .= '<h3>' . t('Uses') . '</h3>';
+      $output .= '<dl><dt>' . t('Rename admin paths') . '</dt>';
+      $output .= '<dd>' . t('Choose how to rename admin paths by using') . ' ' . l(t('Path admin configuration'), 'admin/config/user-interface/rename-admin-paths') . '</dd>';
+      $output .= '</dl>';
+      return $output;
+
+    case 'admin/config/system/rename-admin-paths':
+      $output = '<p>' . t('Configure how to rename admin paths.') . '</p>';
+      return $output;
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function rename_admin_paths_permission() {
+  return array(
+    'administer path admin' => array(
+      'title' => t('Administer admin paths'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function rename_admin_paths_menu() {
+  $items['admin/config/system/rename-admin-paths'] = array(
+    'title' => 'Rename Admin Paths',
+    'description' => 'Configure how to rename admin paths.',
+  );
+
+  return $items;
+}

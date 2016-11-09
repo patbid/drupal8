@@ -1,0 +1,36 @@
+commerce_order.commerce_order_type.*:
+  type: config_entity
+  label: 'Order type'
+  mapping:
+    label:
+      type: label
+      label: 'Label'
+    id:
+      type: string
+      label: 'Machine-readable name'
+    workflow:
+      type: string
+      label: 'Workflow'
+    refresh_mode:
+        type: string
+        label: 'Order refresh mode'
+    refresh_frequency:
+        type: integer
+        label: 'Order refresh frequency'
+
+commerce_order.commerce_order_item_type.*:
+  type: config_entity
+  label: 'order item type'
+  mapping:
+    label:
+      type: label
+      label: 'Label'
+    id:
+      type: string
+      label: 'Machine-readable name'
+    purchasableEntityType:
+      type: string
+      label: 'Purchasable entity type'
+    orderType:
+      type: string
+      label: 'Order type'

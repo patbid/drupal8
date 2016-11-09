@@ -1,0 +1,350 @@
+<?php
+
+/**
+ * @file
+ * Defines the Product entity and associated features.
+ */
+
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Cache\Cache;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\Display\EntityFormDisplayInterface;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Render\Element;
+use Drupal\commerce_product\Entity\ProductType;
+
+/**
+ * Implements hook_config_translation_info_alter().
+ */
+function commerce_product_config_translation_info_alter(&$info) {
+  $info['commerce_product_attribute']['class'] = '\Drupal\commerce_product\ConfigTranslation\ProductAttributeMapper';
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_presave().
+ */
+function commerce_product_entity_form_display_update(EntityFormDisplayInterface $form_display) {
+  // Reset the cached attribute field map when the 'default' product variation
+  // form mode is updated, since the map ordering is based on it.
+  if ($form_display->getTargetEntityTypeId() == 'commerce_product_variation' && $form_display->getMode() == 'default') {
+    $attribute_field_manager = \Drupal::service('commerce_product.attribute_field_manager');
+    $attribute_field_manager->clearCaches();
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_update().
+ */
+function commerce_product_entity_view_display_update(EntityInterface $entity) {
+  // The product view uses the variation view and needs to be cleared, which doesn't happen automatically
+  // because we're editing the variation, not the product
+  if (substr($entity->getConfigTarget(), 0, 27) === 'commerce_product_variation.') {
+    Cache::invalidateTags(['commerce_product_view']);
+  }
+}
+
+/**
+ * Implements hook_entity_access().
+ */
+function commerce_product_entity_access(EntityInterface $entity, $operation, $account) {
+  // Allow published products to be viewed by all users for now.
+  // @todo Remove once we implement the full product permissions.
+  if ($operation == 'view') {
+    if ($entity->getEntityTypeId() == 'commerce_product' && $entity->isPublished()) {
+      return AccessResult::allowed();
+    }
+    elseif ($entity->getEntityTypeId() == 'commerce_product_variation' && $entity->isActive()) {
+      return AccessResult::allowed();
+    }
+  }
+  return AccessResult::neutral();
+}
+
+/**
+ * Implements hook_theme().
+ */
+function commerce_product_theme() {
+  return [
+    'commerce_product_form' => [
+      'render element' => 'form',
+    ],
+    'commerce_product' => [
+      'render element' => 'elements',
+    ],
+    'commerce_product_variation' => [
+      'render element' => 'elements',
+    ],
+    'commerce_product_attribute_value' => [
+      'render element' => 'elements',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_theme_suggestions_commerce_product().
+ */
+function commerce_product_theme_suggestions_commerce_product(array $variables) {
+  return _commerce_entity_theme_suggestions('commerce_product', $variables);
+}
+
+/**
+ * Implements hook_theme_suggestions_commerce_product_variation().
+ */
+function commerce_product_theme_suggestions_commerce_product_variation(array $variables) {
+  return _commerce_entity_theme_suggestions('commerce_product_variation', $variables);
+}
+
+/**
+ * Implements hook_theme_suggestions_commerce_product_commerce_product_attribute_value().
+ */
+function commerce_product_theme_suggestions_commerce_product_attribute_value(array $variables) {
+  return _commerce_entity_theme_suggestions('commerce_product_attribute_value', $variables);
+}
+
+/**
+ * Prepares variables for product templates.
+ *
+ * Default template: commerce-product.html.twig.
+ *
+ * @param array $variables
+ *   An associative array containing:
+ *   - elements: An associative array containing rendered fields.
+ *   - attributes: HTML attributes for the containing element.
+ */
+function template_preprocess_commerce_product(array &$variables) {
+  /** @var Drupal\commerce_product\Entity\ProductInterface $product */
+  $product = $variables['elements']['#commerce_product'];
+
+  $variables['product_entity'] = $product;
+  $variables['product_url'] = $product->toUrl();
+  $variables['product'] = [];
+  foreach (Element::children($variables['elements']) as $key) {
+    $variables['product'][$key] = $variables['elements'][$key];
+  }
+}
+
+/**
+ * Prepares variables for product variation templates.
+ *
+ * Default template: commerce-product-variation.html.twig.
+ *
+ * @param array $variables
+ *   An associative array containing:
+ *   - elements: An associative array containing rendered fields.
+ *   - attributes: HTML attributes for the containing element.
+ */
+function template_preprocess_commerce_product_variation(array &$variables) {
+  /** @var Drupal\commerce_product\Entity\ProductVariationInterface $product_variation */
+  $product_variation = $variables['elements']['#commerce_product_variation'];
+  $product = $product_variation->getProduct();
+
+  $variables['product_variation_entity'] = $product_variation;
+  $variables['product_url'] = $product->toUrl();
+  $variables['product_variation'] = [];
+  foreach (Element::children($variables['elements']) as $key) {
+    $variables['product_variation'][$key] = $variables['elements'][$key];
+  }
+}
+
+/**
+ * Prepares variables for product attribute value templates.
+ *
+ * Default template: commerce-product-attribute-value.html.twig.
+ *
+ * @param array $variables
+ *   An associative array containing:
+ *   - elements: An associative array containing rendered fields.
+ *   - attributes: HTML attributes for the containing element.
+ */
+function template_preprocess_commerce_product_attribute_value(array &$variables) {
+  /** @var Drupal\commerce_product\Entity\ProductAttributeValueInterface $product */
+  $attribute_value = $variables['elements']['#commerce_product_attribute_value'];
+
+  $variables['product_attribute_value_entity'] = $attribute_value;
+  $variables['product_attribute_value'] = [];
+  foreach (Element::children($variables['elements']) as $key) {
+    $variables['product_attribute_value'][$key] = $variables['elements'][$key];
+  }
+}
+
+/**
+ * Adds the default stores field to a product.
+ *
+ * A product can belong to multiple stores.
+ * Store id can't be a base field because the Views integration is broken.
+ * Instead, it is created as a configurable field for each order type.
+ *
+ * @param \Drupal\commerce_product\Entity\ProductTypeInterface $product_type
+ *   The product type.
+ */
+function commerce_product_add_stores_field($product_type) {
+  $field_storage = FieldStorageConfig::loadByName('commerce_product', 'stores');
+  $field = FieldConfig::loadByName('commerce_product', $product_type->id(), 'stores');
+  if (empty($field_storage)) {
+    $field_storage = FieldStorageConfig::create([
+      'field_name' => 'stores',
+      'entity_type' => 'commerce_product',
+      'type' => 'entity_reference',
+      'cardinality' => FieldStorageConfig::CARDINALITY_UNLIMITED,
+      'settings' => [
+        'target_type' => 'commerce_store',
+      ],
+      'locked' => TRUE,
+      'translatable' => FALSE,
+    ]);
+    $field_storage->save();
+  }
+  if (empty($field)) {
+    $field = FieldConfig::create([
+      'field_storage' => $field_storage,
+      'bundle' => $product_type->id(),
+      'label' => 'Stores',
+      'required' => TRUE,
+      'settings' => [
+        'handler' => 'default',
+        'handler_settings' => [],
+      ],
+      'translatable' => FALSE,
+    ]);
+    $field->save();
+
+    $form_display = commerce_get_entity_display('commerce_product', $product_type->id(), 'form');
+    $form_display->setComponent('stores', [
+      'type' => 'commerce_entity_select',
+      'weight' => -10,
+    ]);
+    $form_display->save();
+  }
+}
+
+/**
+ * Adds the default body field to a product type.
+ *
+ * @param \Drupal\commerce_product\Entity\ProductTypeInterface $product_type
+ *   The product type.
+ * @param string $label
+ *   (optional) The label for the body instance. Defaults to 'Body'.
+ */
+function commerce_product_add_body_field($product_type, $label = 'Body') {
+  $field_storage = FieldStorageConfig::loadByName('commerce_product', 'body');
+  $field = FieldConfig::loadByName('commerce_product', $product_type->id(), 'body');
+  if (empty($field_storage)) {
+    $field_storage = FieldStorageConfig::create([
+      'field_name' => 'body',
+      'entity_type' => 'commerce_product',
+      'type' => 'text_with_summary',
+    ]);
+    $field_storage->save();
+  }
+  if (empty($field)) {
+    $field = FieldConfig::create([
+      'field_storage' => $field_storage,
+      'bundle' => $product_type->id(),
+      'label' => $label,
+      'settings' => ['display_summary' => FALSE],
+    ]);
+    $field->save();
+
+    $view_display = commerce_get_entity_display('commerce_product', $product_type->id(), 'view');
+    $view_display->setComponent('body', [
+      'label' => 'hidden',
+      'type' => 'text_default',
+    ]);
+    $view_display->save();
+
+    $form_display = commerce_get_entity_display('commerce_product', $product_type->id(), 'form');
+    $form_display->setComponent('body', [
+      'type' => 'text_textarea_with_summary',
+      'weight' => 1,
+    ]);
+    $form_display->save();
+  }
+}
+
+/**
+ * Adds the default variations field to a product type.
+ *
+ * Variations can't be a base field because the Views integration is broken.
+ * Instead, it is created as a configurable field for each product type.
+ *
+ * @param \Drupal\commerce_product\Entity\ProductTypeInterface $product_type
+ *   The product type.
+ */
+function commerce_product_add_variations_field($product_type) {
+  $field_storage = FieldStorageConfig::loadByName('commerce_product', 'variations');
+  $field = FieldConfig::loadByName('commerce_product', $product_type->id(), 'variations');
+  if (empty($field_storage)) {
+    $field_storage = FieldStorageConfig::create([
+      'field_name' => 'variations',
+      'entity_type' => 'commerce_product',
+      'type' => 'entity_reference',
+      'cardinality' => FieldStorageConfig::CARDINALITY_UNLIMITED,
+      'settings' => [
+        'target_type' => 'commerce_product_variation',
+      ],
+      'locked' => TRUE,
+      'translatable' => FALSE,
+    ]);
+    $field_storage->save();
+  }
+  if (empty($field)) {
+    $field = FieldConfig::create([
+      'field_storage' => $field_storage,
+      'bundle' => $product_type->id(),
+      'label' => 'Variations',
+      'required' => TRUE,
+      'settings' => [
+        'handler' => 'default',
+        'handler_settings' => [
+          'target_bundles' => [
+            $product_type->getVariationTypeId(),
+          ],
+        ],
+      ],
+      'translatable' => FALSE,
+    ]);
+    $field->save();
+
+    $view_display = commerce_get_entity_display('commerce_product', $product_type->id(), 'view');
+    $view_display->setComponent('variations', [
+      'type' => 'commerce_add_to_cart',
+      'weight' => 10,
+    ]);
+    $view_display->save();
+
+    $form_display = commerce_get_entity_display('commerce_product', $product_type->id(), 'form');
+    $form_display->setComponent('variations', [
+      'type' => 'inline_entity_form_complex',
+      'weight' => 10,
+      'settings' => [
+        'override_labels' => TRUE,
+        'label_singular' => 'variation',
+        'label_plural' => 'variations',
+      ],
+    ]);
+    $form_display->save();
+  }
+}
+
+/**
+ * Implements hook_field_widget_form_alter().
+ */
+function commerce_product_field_widget_form_alter(&$element, FormStateInterface $form_state, $context) {
+  /** @var \Drupal\Core\Field\FieldDefinitionInterface $field_definition */
+  $field_definition = $context['items']->getFieldDefinition();
+  $field_name = $field_definition->getName();
+  $entity_type = $field_definition->getTargetEntityTypeId();
+  $widget_name = $context['widget']->getPluginId();
+  $required = $field_definition->isRequired();
+  if ($field_name == 'path' && $entity_type == 'commerce_product' && $widget_name == 'path') {
+    $element['alias']['#description'] = t('The alternative URL for this product. Use a relative path. For example, "/my-product".');
+  }
+  elseif ($field_name == 'title' && $entity_type == 'commerce_product_variation' && !$required) {
+    // The title field is optional only when its value is automatically
+    // generated, in which case the widget needs to be hidden.
+    $element['#access'] = FALSE;
+  }
+}

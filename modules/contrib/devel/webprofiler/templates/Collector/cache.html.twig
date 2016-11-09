@@ -9,7 +9,7 @@
     {% endset %}
     {% set text %}
 
-    {% for bin, cids in collector.getCacheHits %}
+    {% for bin, cids in collector.getCacheHitsCount %}
         <div class="sf-toolbar-info-piece">
             <b>{{ bin }}</b>
             <span>{{ cids }}</span>

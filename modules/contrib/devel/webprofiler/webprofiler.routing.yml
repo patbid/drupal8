@@ -71,11 +71,20 @@ webprofiler.database.explain:
   requirements:
     _permission: 'access webprofiler'
 
+# manage profiles (import/export/purge)
+webprofiler.admin_manage:
+  path: '/admin/config/development/profiler/manage'
+  defaults:
+    _form: 'Drupal\webprofiler\Form\ManageForm'
+    _title: 'Manage'
+  requirements:
+    _permission: 'access webprofiler'
+
 # configure webprofiler
-webprofiler.settings:
-  path: '/admin/config/development/devel/webprofiler'
+webprofiler.admin_configure:
+  path: '/admin/config/development/profiler/configure'
   defaults:
     _form: 'Drupal\webprofiler\Form\ConfigForm'
-    _title: 'Webprofiler settings'
+    _title: 'Configure'
   requirements:
     _permission: 'access webprofiler'

@@ -1,3 +1,9 @@
+webprofiler.admin_configure:
+  title: 'Webprofiler'
+  description: 'Choose active datacollectors and manage configuration.'
+  route_name: webprofiler.admin_configure
+  parent: system.admin_config_development
+
 webprofiler.admin_list:
   title: 'Webprofiler'
   description: 'List saved profiles.'
